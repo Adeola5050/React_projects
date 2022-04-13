@@ -1,44 +1,66 @@
-import React, { useEffect, useState } from 'react'
-import './BudgetBalance.css'
+import axios from 'axios';
+import React, { useState, useEffect } from 'react';
+import "../../components/budget/BudgetBalance.css"
 
-const BudgetBalance = (props) => {
-    const [input, setInput] = useState(" ")
-    const handleInput = (e) => {
-        console.log(e)
+const BudgetBalance = (props) =>{
+        const [input, setInput] = useState("")
+        const [exchangeRate, setExchangeRate] = useState({})
+        const [selectOption, setSelectOption] = useState("")
 
-        setInput(e.target.value)
-    }
 
-    useEffect(() => {
-        console.log("i just MOUNTED @ Budget Balance")
 
-        return () => {
-            console.log("i just UNMOUNTED @ Budget Balance")
-
+        const handleInput = (e) => {
+            setInput(e.target.value)
         }
-    }, [props.balance])
 
+        const handleSelect= (e)=>{
+           e.target.value===Object.keys(exchangeRate)[e] ?
+           props.setBalance(1000 * exchangeRate[e.target.value]): 
+          (selectOption==="" ? 
+          props.setBalance(props.balance * exchangeRate[e.target.value])
+          :props.setBalance(props.balance / exchangeRate[selectOption] * exchangeRate[e.target.value]))
 
-    return (
+          setSelectOption(e.target.value)
+        }
 
-        <
-        div div className = "budgetBalance" >
+        useEffect(() => {
+            axios.get('https://v6.exchangerate-api.com/v6/b6c62b10f2232f584fe19957/latest/USD').then(
+                (response) => {
+                    setExchangeRate(response.data.conversion_rates)
+                    setSelectOption(Object.keys(response.data.conversion_rates)[0])
 
-        <
-        div className = "balance" > { props.balance } < /div>
+                }
+            )
 
-        <
-        div className = "balance-button" >
-        <
-        input onChange = { handleInput }
-        /> <
-        button onClick = {
-            () => props.setBalance(input)
-        } > Update Balance < /button> < 
-        div > <
-        /div>
-    )
+        }, [])
 
+     useEffect(() => {
+            console.log("I just MOUNTED @ Budget Balance")
+            return () => {
+                console.log("I just UNMOUNTED @ Budget Balance")
+            }
+        }, [props.balance])
+
+        return ( 
+
+            <div className = "budgetBalance">
+                <div className = "balance"> 
+                 { props.balance } 
+             </div>  
+                <select className = "balance-dropdown" onChange={handleSelect}>
+                {Object.keys(exchangeRate).length > 0 && 
+                  Object.keys(exchangeRate).map(
+                        (data, index) => <option keys= {index}>{data}</option>
+    )}
+                </select>
+
+                <div className="balance-button">
+                  <input type="number" onChange ={handleInput}/>
+                    <button onClick = {() => props.setBalance(input)}>Update Balance</button>
+              </div>      
+          </div>
+    
+  )
 }
 
-export default BudgetBalance
+export default BudgetBalance;
